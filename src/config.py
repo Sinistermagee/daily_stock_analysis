@@ -30,6 +30,7 @@ class Config:
     
     # === 自选股配置 ===
     stock_list: List[str] = field(default_factory=list)
+    etf_list: List[str] = field(default_factory=list)
 
     # === 飞书云文档配置 ===
     feishu_app_id: Optional[str] = None
@@ -377,33 +378,48 @@ class Config:
         cls._instance = None
 
     def refresh_stock_list(self) -> None:
-        """
-        热读取 STOCK_LIST 环境变量并更新配置中的自选股列表
-        
-        支持两种配置方式：
-        1. .env 文件（本地开发、定时任务模式） - 修改后下次执行自动生效
-        2. 系统环境变量（GitHub Actions、Docker） - 启动时固定，运行中不变
-        """
-        # 若 .env 中配置了 STOCK_LIST，则以 .env 为准；否则回退到系统环境变量
-        env_path = Path(__file__).parent / '.env'
-        stock_list_str = ''
-        if env_path.exists():
-            env_values = dotenv_values(env_path)
-            stock_list_str = (env_values.get('STOCK_LIST') or '').strip()
+    """
+    热读取 STOCK_LIST / ETF_LIST 环境变量并更新配置
+    
+    - STOCK_LIST → 股票
+    - ETF_LIST   → ETF
+    """
 
-        if not stock_list_str:
-            stock_list_str = os.getenv('STOCK_LIST', '')
+    env_path = Path(__file__).parent / '.env'
 
-        stock_list = [
-            code.strip()
-            for code in stock_list_str.split(',')
-            if code.strip()
-        ]
+    # ===== 股票列表 =====
+    stock_list_str = ''
+    if env_path.exists():
+        env_values = dotenv_values(env_path)
+        stock_list_str = (env_values.get('STOCK_LIST') or '').strip()
 
-        if not stock_list:        
-            stock_list = ['000001']
+    if not stock_list_str:
+        stock_list_str = os.getenv('STOCK_LIST', '')
 
-        self.stock_list = stock_list
+    self.stock_list = [
+        code.strip()
+        for code in stock_list_str.split(',')
+        if code.strip()
+    ]
+
+    if not self.stock_list:
+        self.stock_list = ['000001']
+
+    # ===== ETF 列表 =====
+    etf_list_str = ''
+    if env_path.exists():
+        env_values = dotenv_values(env_path)
+        etf_list_str = (env_values.get('ETF_LIST') or '').strip()
+
+    if not etf_list_str:
+        etf_list_str = os.getenv('ETF_LIST', '')
+
+    self.etf_list = [
+        code.strip()
+        for code in etf_list_str.split(',')
+        if code.strip()
+    ]
+
     
     def validate(self) -> List[str]:
         """
