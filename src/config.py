@@ -378,47 +378,21 @@ class Config:
         cls._instance = None
 
     def refresh_stock_list(self) -> None:
-    """
-    热读取 STOCK_LIST / ETF_LIST 环境变量并更新配置
-    
-    - STOCK_LIST → 股票
-    - ETF_LIST   → ETF
-    """
+        """
+        热读取 STOCK_LIST / ETF_LIST 环境变量并更新配置
+        """
+        env_path = Path(__file__).parent / '.env'
+        env_values = dotenv_values(env_path) if env_path.exists() else {}
 
-    env_path = Path(__file__).parent / '.env'
+        # ===== 股票列表 =====
+        stock_list_str = (env_values.get('STOCK_LIST') or os.getenv('STOCK_LIST', '')).strip()
+        self.stock_list = [c.strip() for c in stock_list_str.split(',') if c.strip()]
+        if not self.stock_list:
+            self.stock_list = ['000001']
 
-    # ===== 股票列表 =====
-    stock_list_str = ''
-    if env_path.exists():
-        env_values = dotenv_values(env_path)
-        stock_list_str = (env_values.get('STOCK_LIST') or '').strip()
-
-    if not stock_list_str:
-        stock_list_str = os.getenv('STOCK_LIST', '')
-
-    self.stock_list = [
-        code.strip()
-        for code in stock_list_str.split(',')
-        if code.strip()
-    ]
-
-    if not self.stock_list:
-        self.stock_list = ['000001']
-
-    # ===== ETF 列表 =====
-    etf_list_str = ''
-    if env_path.exists():
-        env_values = dotenv_values(env_path)
-        etf_list_str = (env_values.get('ETF_LIST') or '').strip()
-
-    if not etf_list_str:
-        etf_list_str = os.getenv('ETF_LIST', '')
-
-    self.etf_list = [
-        code.strip()
-        for code in etf_list_str.split(',')
-        if code.strip()
-    ]
+        # ===== ETF 列表 =====
+        etf_list_str = (env_values.get('ETF_LIST') or os.getenv('ETF_LIST', '')).strip()
+        self.etf_list = [c.strip() for c in etf_list_str.split(',') if c.strip()]
 
     
     def validate(self) -> List[str]:
