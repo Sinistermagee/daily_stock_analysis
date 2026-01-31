@@ -530,14 +530,16 @@ class StockAnalysisPipeline:
             
             # 收集结果
             for idx, future in enumerate(as_completed(future_to_code)):
-                code = future_to_code[future]
+                # ✅ ① 拆包，区分 stock / etf
+                task_type, code = future_to_code[future]
                 try:
                     result = future.result()
                     if result:
                         results.append(result)
 
+                    # ✅ ② 只对「股票」加延迟，ETF 不延迟
                     # Issue #128: 分析间隔 - 在个股分析和大盘分析之间添加延迟
-                    if idx < len(stock_codes) - 1 and analysis_delay > 0:
+                    if task_type == "stock" and analysis_delay > 0:
                         logger.debug(f"等待 {analysis_delay} 秒后继续下一只股票...")
                         time.sleep(analysis_delay)
 
