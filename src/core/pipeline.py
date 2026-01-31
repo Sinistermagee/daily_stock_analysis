@@ -505,16 +505,28 @@ class StockAnalysisPipeline:
         # 注意：max_workers 设置较低（默认3）以避免触发反爬
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # 提交任务
-            future_to_code = {
-                executor.submit(
+            future_to_code = {}
+            # ===== 股票 =====
+            for code in stock_codes:
+                future = executor.submit(
                     self.process_single_stock,
                     code,
                     skip_analysis=dry_run,
                     single_stock_notify=single_stock_notify and send_notification,
                     report_type=report_type  # Issue #119: 传递报告类型
-                ): code
-                for code in stock_codes
-            }
+                )
+                future_to_code[future] = ("stock", code)
+
+             # ===== ETF =====
+            for etf_code in etf_codes:
+                future = executor.submit(
+                    self.process_single_etf,   # 注意：ETF 用单独方法
+                    etf_code,
+                    skip_analysis=dry_run,
+                    single_stock_notify=single_stock_notify and send_notification,
+                    report_type=report_type # Issue #119: 传递报告类型
+                )
+                future_to_code[future] = ("etf", etf_code)
             
             # 收集结果
             for idx, future in enumerate(as_completed(future_to_code)):
