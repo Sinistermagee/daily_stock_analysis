@@ -471,9 +471,10 @@ class StockAnalysisPipeline:
         if stock_codes is None:
             self.config.refresh_stock_list()
             stock_codes = self.config.stock_list
-        
-        if not stock_codes:
-            logger.error("未配置自选股列表，请在 .env 文件中设置 STOCK_LIST")
+            etf_codes = getattr(self.config, "etf_list", [])
+
+        if not stock_codes and not etf_codes:
+            logger.error("未配置自选股或 ETF 列表，请设置 STOCK_LIST / ETF_LIST")
             return []
         
         logger.info(f"===== 开始分析 {len(stock_codes)} 只股票 =====")
